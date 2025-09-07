@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网络赛上厕所汇报</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>网络赛上厕所汇报 --by Gerchart</h1>
+
+        <!-- 大学名称输入 -->
+        <div class="section">
+            <label for="universityName">大学名称：</label>
+            <input type="text" id="universityName" placeholder="请输入大学名称" />
+        </div>
+        <div class="section">
+            <h2>队伍信息解析格式</h2>
+            <div class="format-group">
+                <label for="parseFormat">解析格式：</label>
+                <textarea type="text" id="parseFormat"
+                    placeholder="{university} {teamName} {member1} {member2} {member3}"></textarea>
+               <small>可用变量：{university}, {teamName}, {englishName}, {member1}, {member2}, {member3}（用空格分隔）</small>
+            </div>
+            <div class="format-group">
+                <label for="memberInfoFormat">成员信息格式：</label>
+                <textarea id="memberInfoFormat" rows="4"
+                    placeholder="{university} {teamName} {memberName}"></textarea>
+                <small>可用变量：{university}, {teamName}, {englishName}, {memberName}, {memberIndex}（支持换行）</small>
+            </div>
+        </div>
+        <div class="section">
+            <h2>自定义报备格式</h2>
+            <div class="format-group">
+                <label for="toiletFormat">上厕所格式：</label>
+                <input type="text" id="toiletFormat" placeholder="{university} {teamName} {memberName} 上厕所" />
+                <small>可用变量：{university}, {teamName}, {memberName}</small>
+            </div>
+            <div class="format-group">
+                <label for="returnFormat">返回格式：</label>
+                <input type="text" id="returnFormat" placeholder="{university} {teamName} {memberName} 已返回" />
+                <small>可用变量：{university}, {teamName}, {memberName}</small>
+            </div>
+        </div>
+
+        <!-- 队伍信息输入 -->
+        <div class="section">
+            <h2>队伍信息输入</h2>
+            <textarea id="teamInput" placeholder="请输入队伍信息，格式：中文队名	队员1	队员2	队员3（每行一个队伍）"></textarea>
+            <div class="button-group">
+                <button onclick="parseTeams()">解析队伍信息</button>
+                <button onclick="clearAllTeams()" class="danger">清空所有队伍</button>
+            </div>
+        </div>
+
+        <!-- 队伍表格显示 -->
+        <div class="section">
+            <h2>队伍信息</h2>
+            <div id="teamsTable"></div>
+        </div>
+
+        <!-- 正在上厕所的成员 -->
+        <div class="section" id="currentToiletSection" style="display: none;">
+            <h2>正在上厕所的成员</h2>
+            <table id="currentToiletTable">
+                <thead>
+                    <tr>
+                        <th>队伍名称</th>
+                        <th>成员姓名</th>
+                        <th>开始时间</th>
+                        <th>已用时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="currentToiletBody">
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 历史记录 -->
+        <div class="section">
+            <h2>历史记录</h2>
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="搜索队伍名或成员姓名">
+                <button onclick="searchHistory()">搜索</button>
+                <button onclick="exportCSV()">导出CSV</button>
+                <button onclick="clearHistory()" class="danger">清空历史记录</button>
+            </div>
+            <div class="history-container">
+                <table id="historyTable">
+                    <thead>
+                        <tr>
+                            <th>队伍名称</th>
+                            <th>成员姓名</th>
+                            <th>开始时间</th>
+                            <th>结束时间</th>
+                            <th>耗时</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框 -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <p id="modalText"></p>
+            <div class="modal-buttons">
+                <button id="confirmBtn">确认</button>
+                <button id="cancelBtn">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 信息提示框 -->
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <p id="infoText"></p>
+            <div class="modal-buttons">
+                <button id="copyBtn">复制</button>
+                <button id="closeBtn">关闭</button>
+            </div>
+        </div>
+    </div>
+    <div id="announcementModal" class="modal">
+        <div class="modal-content announcement-content">
+            <span class="close">&times;</span>
+            <h2>🚽 厕所报备系统使用说明</h2>
+            <div class="announcement-text">
+                <h3>📝 基本操作流程：</h3>
+                <ol>
+                    <li><strong>输入大学名称</strong> - 必填项，用于生成报备信息</li>
+                    <li><strong>设置报备格式</strong> - 可自定义上厕所和返回的消息格式</li>
+                    <li><strong>队伍信息格式</strong> - 可自定义解析格式，使用变量占位符，如 {teamName} {member1} 等</li>
+                    <li><strong>成员信息格式</strong> - 可自定义复制的成员信息内容和格式</li>
+                    <li><strong>输入队伍信息</strong> - 按格式粘贴队伍数据，点击解析</li>
+                    <li><strong>开始上厕所</strong> - 点击队伍信息中的成员姓名，确认后复制报备信息</li>
+                    <li><strong>结束上厕所</strong> - 在"正在上厕所"表格中点击结束按钮</li>
+                </ol>
+
+                <h3>✨ 功能特色：</h3>
+                <ul>
+                    <li>🕒 <strong>实时计时</strong> - 自动记录上厕所时长</li>
+                    <li>💾 <strong>数据持久化</strong> - 刷新页面数据不丢失</li>
+                    <li>📊 <strong>历史记录</strong> - 完整记录所有厕所活动</li>
+                    <li>🔍 <strong>搜索过滤</strong> - 支持按队伍名/成员名搜索</li>
+                    <li>📤 <strong>数据导出</strong> - 支持导出CSV格式数据</li>
+                    <li>📱 <strong>响应式设计</strong> - 支持手机端使用</li>
+                </ul>
+
+                <h3>⚠️ 注意事项：</h3>
+                <ul>
+                    <li>队伍信息格式：中文队名 → 英文队名 → 队员1 → 队员2 → 队员3（制表符 / 空格 分隔）</li>
+                    <li>正在上厕所的成员会显示黄色高亮提示</li>
+                    <li>有成员上厕所时无法删除对应队伍</li>
+                </ul>
+            </div>
+            <div class="modal-buttons">
+                <button id="startUsingBtn">开始使用</button>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>
